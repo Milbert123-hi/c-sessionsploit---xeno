@@ -1,0 +1,50 @@
+
+
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <string>
+
+namespace fs = std::filesystem;
+
+int main(int argc, char** argv) {
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " <relative-path-in-project, e.g. server/scripts/MyScript.lua> <lua-source-string>\n";
+        return 1;
+    }
+
+    std::string relativePath = argv[1];
+    std::string luaSource = argv[2];
+
+    // Base project directory (you can change this)
+    fs::path projectRoot = fs::current_path() / "MyRojoProject";
+
+    // Full disk path where we'll write the script
+    fs::path fullPath = projectRoot / relativePath;
+    fs::path dirPath = fullPath.parent_path();
+
+    try {
+        if (!fs::exists(dirPath)) {
+            fs::create_directories(dirPath);
+            std::cout << "Created directories: " << dirPath.string() << "\n";
+        }
+
+        // Write the Lua file (overwrites if exists)
+        std::ofstream ofs(fullPath, std::ios::binary);
+        if (!ofs) {
+            std::cerr << "Failed to open file for writing: " << fullPath.string() << "\n";
+            return 2;
+        }
+
+        ofs << luaSource;
+        ofs.close();
+
+        std::cout << "Wrote Lua script to: " << fullPath.string() << "\n";
+        std::cout << "If you're using Rojo, run: rojo serve --project " << projectRoot.string() << "\n";
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << "\n";
+        return 3;
+    }
+
+    return 0;
+}
